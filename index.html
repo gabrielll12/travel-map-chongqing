@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人旅行助手 - 重庆</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '4d9ea663d56d279042fc0152a4a52723',
+        }
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=e013025a0872d5fd43785ba1ef0674c2&plugin=AMap.PlaceSearch"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        header h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        @media (min-width: 768px) {
+            header h1 {
+                font-size: 2.5em;
+            }
+        }
+        
+        header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+        
+        .weather-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .weather-icon {
+            font-size: 3em;
+        }
+        
+        .weather-details {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .weather-details h3 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .weather-temp {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .weather-advice {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 3px solid #ffc107;
+        }
+        
+        .hotel-info {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .hotel-icon {
+            font-size: 2.5em;
+        }
+        
+        .hotel-details h3 {
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        
+        .hotel-details p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        @media (min-width: 900px) {
+            .content {
+                grid-template-columns: 380px 1fr;
+            }
+        }
+        
+        .list-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        @media (min-width: 900px) {
+            .list-panel {
+                max-height: 600px;
+            }
+        }
+        
+        .list-panel h2 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            font-size: 1.2em;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .coffee-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .coffee-card:hover {
+            transform: translateX(3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left-color: #667eea;
+        }
+        
+        .coffee-card.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-left-color: #ffd700;
+        }
+        
+        .coffee-card.hidden {
+            display: none;
+        }
+        
+        .coffee-card h3 {
+            font-size: 1.05em;
+            margin-bottom: 6px;
+        }
+        
+        .coffee-card .type-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            margin-bottom: 6px;
+        }
+        
+        .coffee-card.active .type-badge {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .coffee-card .distance {
+            display: inline-block;
+            background: #f39c12;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            margin-bottom: 6px;
+            margin-left: 6px;
+        }
+        
+        .coffee-card.active .distance {
+            background: rgba(243,156,18,0.8);
+        }
+        
+        .coffee-card p {
+            font-size: 0.85em;
+            line-height: 1.4;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+        
+        .coffee-card .address {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        
+        .map-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        #map {
+            height: 450px;
+            border-radius: 10px;
+        }
+        
+        @media (min-width: 900px) {
+            #map {
+                height: 560px;
+            }
+        }
+        
+        .legend {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .legend h4 {
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.95em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+        }
+        
+        .legend-color {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .info-popup {
+            max-width: 280px;
+        }
+        
+        .info-popup h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+        
+        .info-popup p {
+            margin-bottom: 6px;
+            line-height: 1.4;
+            font-size: 0.9em;
+        }
+        
+        .info-popup .tag {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .distance-info {
+            background: #fff3cd;
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-top: 8px;
+            border-left: 3px solid #ffc107;
+            font-size: 0.9em;
+        }
+        
+        .distance-info strong {
+            color: #856404;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .search-box input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-box button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .map-search-box {
+            margin-bottom: 12px;
+        }
+        
+        .add-location-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .add-location-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .add-location-form {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .add-location-form.show {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .form-actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .geo-result {
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #155724;
+            display: none;
+        }
+        
+        .geo-result.show {
+            display: block;
+        }
+        
+        .help-text {
+            background: #e7f3ff;
+            color: #0c5460;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+        
+        .help-text a {
+            color: #0066cc;
+            text-decoration: underline;
+        }
+        
+        .location-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .delete-btn {
+            background: transparent;
+            color: #999;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            line-height: 1;
+        }
+        
+        .delete-btn:hover {
+            color: #e74c3c;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧭 个人旅行助手</h1>
+            <p>探索重庆，轻松出行</p>
+        </header>
+        
+        <div class="weather-panel">
+            <div class="weather-icon">🌤️</div>
+            <div class="weather-details">
+                <h3>重庆天气预报</h3>
+                <div class="weather-temp">16°C ~ 22°C · 多云</div>
+                <div class="weather-advice">
+                    <strong>💡 穿衣建议：</strong>建议穿长袖T恤+薄外套，方便增减。记得带伞，可能有阵雨。
+                </div>
+            </div>
+        </div>
+        
+        <div class="hotel-info">
+            <div class="hotel-icon">🏨</div>
+            <div class="hotel-details">
+                <h3>如家精选酒店（重庆解放碑洪崖洞店）</h3>
+                <p>📍 地址：重庆市渝中区解放碑临江路6号 | 距轻轨2号线2号出口步行1分钟</p>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="list-panel">
+                <h2>📍 地点列表</h2>
+                
+                <button class="add-location-btn" id="add-location-btn">➕ 添加新地点</button>
+                
+                <div class="add-location-form" id="add-location-form">
+                    <div class="form-group">
+                        <label>地点名称/地址 *</label>
+                        <input type="text" id="new-location-name" placeholder="例如：洪崖洞 或 重庆市渝中区嘉陵江滨江路88号">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>地点类型 *</label>
+                        <select id="new-location-type">
+                            <option value="咖啡店">☕ 咖啡店</option>
+                            <option value="饭店">🍜 饭店</option>
+                            <option value="景点">🏛️ 景点</option>
+                            <option value="酒店">🏨 酒店</option>
+                            <option value="交通枢纽">✈️ 交通枢纽</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>营业时间</label>
+                        <input type="text" id="new-location-hours" placeholder="例如：11:00-23:00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>特色描述</label>
+                        <textarea id="new-location-feature" placeholder="例如：重庆标志性景点，巴渝传统建筑吊脚楼，夜景绝美"></textarea>
+                    </div>
+                    
+                    <div class="geo-result" id="geo-result"></div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancel-add-btn">取消</button>
+                        <button type="button" class="btn-primary" id="search-location-btn">🔍 搜索地点</button>
+                        <button type="button" class="btn-primary" id="confirm-add-btn" style="display: none;">添加地点</button>
+                    </div>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" id="list-search-input" placeholder="搜索地点...">
+                    <button id="list-search-btn">🔍</button>
+                </div>
+                
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="酒店">🏨 酒店</button>
+                    <button class="filter-btn" data-filter="咖啡店">☕ 咖啡店</button>
+                    <button class="filter-btn" data-filter="饭店">🍜 饭店</button>
+                    <button class="filter-btn" data-filter="景点">🏛️ 景点</button>
+                    <button class="filter-btn" data-filter="交通枢纽">✈️ 交通</button>
+                </div>
+                
+                <div id="location-list"></div>
+            </div>
+            
+            <div class="map-panel">
+                <div class="search-box map-search-box">
+                    <input type="text" id="map-search-input" placeholder="搜索地点（如：洪崖洞、解放碑）">
+                    <button id="map-search-btn">🔍 搜索</button>
+                </div>
+                <div id="map"></div>
+                
+                <div class="legend">
+                    <h4>🗺️ 图例说明</h4>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;">🏨</div>
+                        <span>酒店</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;">☕</div>
+                        <span>咖啡店</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2ecc71;">🍜</div>
+                        <span>饭店</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f39c12;">🏛️</div>
+                        <span>景点</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9b59b6;">✈️</div>
+                        <span>交通</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let locationData = null;
+        let locations = [];
+        let hotel = null;
+        let markers = [];
+        let polylines = [];
+        let map = null;
+        let currentFilter = 'all';
+        let currentSearchKeyword = '';
+        let placeSearch = null;
+        let newLocationData = null;
+        let amapLoaded = false;
+
+        // 内嵌地点数据，支持file://协议直接运行
+        const defaultLocationData = {
+          "city": "重庆",
+          "locations": [
+            {
+              "id": "hotel-001",
+              "name": "如家精选酒店（重庆解放碑洪崖洞店）",
+              "type": "酒店",
+              "address": "重庆市渝中区解放碑临江路6号",
+              "lat": 29.5605,
+              "lng": 106.582,
+              "hours": "24小时",
+              "feature": "位于解放碑CBD黄金地段，距轻轨2号线2号出口步行1分钟"
+            },
+            {
+              "id": "coffee-1774506239015",
+              "name": "TOTOMATO(观音桥店)",
+              "type": "咖啡店",
+              "address": "兴塔路172号银鑫楼东",
+              "lat": 29.57778,
+              "lng": 106.53602,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 4.844229302383004
+            },
+            {
+              "id": "coffee-1774506259507",
+              "name": "Soloist独奏公司",
+              "type": "咖啡店",
+              "address": "山城巷80号",
+              "lat": 29.550794,
+              "lng": 106.566059,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 1.8820938643222864
+            },
+            {
+              "id": "coffee-1774506272151",
+              "name": "PomPom Pastry",
+              "type": "咖啡店",
+              "address": "上清寺街道嘉陵新村203号第四幢第一层",
+              "lat": 29.55209,
+              "lng": 106.539503,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 4.215566389877906
+            },
+            {
+              "id": "coffee-1774506284424",
+              "name": "绿夹子咖啡",
+              "type": "咖啡店",
+              "address": "观音桥街道洋河中路42号附6号",
+              "lat": 29.584097,
+              "lng": 106.544182,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 4.501231682411795
+            },
+            {
+              "id": "sight-1774506298046",
+              "name": "下浩里",
+              "type": "景点",
+              "address": "南滨路与东水门长江大桥交叉口东北角",
+              "lat": 29.557588,
+              "lng": 106.595746,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 1.3684109702990555
+            },
+            {
+              "id": "sight-1774506319725",
+              "name": "重庆市奥林匹克体育中心",
+              "type": "景点",
+              "address": "奥体三支路",
+              "lat": 29.525934,
+              "lng": 106.506004,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 8.295798542292383
+            },
+            {
+              "id": "sight-1774506330832",
+              "name": "山城步道",
+              "type": "景点",
+              "address": "中兴路234号旁",
+              "lat": 29.550481,
+              "lng": 106.566712,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 1.8514399369222767
+            },
+            {
+              "id": "sight-1774506341179",
+              "name": "洪崖洞民俗风貌区",
+              "type": "景点",
+              "address": "嘉陵江滨江路88号(小什字地铁站9号口步行430米)",
+              "lat": 29.562204,
+              "lng": 106.579027,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 0.34436341075077886
+            },
+            {
+              "id": "restaurant-1774506351679",
+              "name": "冠火锅",
+              "type": "饭店",
+              "address": "江溉大道与凤澜路交叉口北100米",
+              "lat": 29.596526,
+              "lng": 106.572329,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 4.113629443806549
+            },
+            {
+              "id": "transport-1774506361296",
+              "name": "重庆江北国际机场",
+              "type": "交通枢纽",
+              "address": "两路街道机场路",
+              "lat": 29.722563,
+              "lng": 106.657653,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 19.447302949669595
+            },
+            {
+              "id": "restaurant-1774506375132",
+              "name": "甘九妹老火锅(解放碑店)",
+              "type": "饭店",
+              "address": "解放碑街道民生路365号附1号",
+              "lat": 29.556162,
+              "lng": 106.568496,
+              "hours": "全天开放",
+              "feature": "",
+              "distance": 1.3923748602228212
+            }
+          ]
+        };
+
+        async function loadLocations() {
+            try {
+                const storedData = localStorage.getItem('locationData');
+                if (storedData) {
+                    locationData = JSON.parse(storedData);
+                    initMap();
+                } else {
+                    locationData = defaultLocationData;
+                    initMap();
+                }
+            } catch (error) {
+                console.error('Error loading locations:', error);
+                locationData = defaultLocationData;
+                initMap();
+            }
+        }
+
+        async function saveLocations() {
+            try {
+                localStorage.setItem('locationData', JSON.stringify(locationData));
+                return true;
+            } catch (error) {
+                console.error('Error saving locations:', error);
+                alert('保存地点数据失败！');
+                return false;
+            }
+        }
+
+        function getTypeColor(type) {
+            const colors = {
+                "酒店": "#e74c3c",
+                "咖啡店": "#3498db",
+                "饭店": "#2ecc71",
+                "景点": "#f39c12",
+                "交通枢纽": "#9b59b6"
+            };
+            return colors[type] || "#95a5a6";
+        }
+
+        function getTypeIcon(type) {
+            const icons = {
+                "酒店": "🏨",
+                "咖啡店": "☕",
+                "饭店": "🍜",
+                "景点": "🏛️",
+                "交通枢纽": "✈️"
+            };
+            return icons[type] || "📍";
+        }
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                     Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function formatDistance(km) {
+            if (km < 1) {
+                return Math.round(km * 1000) + '米';
+            }
+            return km.toFixed(1) + '公里';
+        }
+
+        function highlightPolyline(activeIndex) {
+            const activeLocation = locations[activeIndex];
+            polylines.forEach((polyline, index) => {
+                const locationIndex = index + 1;
+                if (locationIndex === activeIndex && activeLocation.id !== hotel.id) {
+                    polyline.setStyle({
+                        color: '#667eea',
+                        weight: 4,
+                        opacity: 0.8,
+                        dashArray: null
+                    });
+                    polyline.bringToFront();
+                } else {
+                    polyline.setStyle({
+                        color: '#95a5a6',
+                        weight: 2,
+                        opacity: 0.5,
+                        dashArray: '5, 5'
+                    });
+                }
+            });
+        }
+
+        function updateActiveCard(activeIndex) {
+            document.querySelectorAll('.location-card').forEach((card, i) => {
+                if (i === activeIndex) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        }
+
+        function focusMarker(index) {
+            updateActiveCard(index);
+            highlightPolyline(index);
+            map.setView([locations[index].lat, locations[index].lng], 15);
+            markers[index].openPopup();
+        }
+
+        function renderLocationList(filter = 'all', searchKeyword = '') {
+            const listContainer = document.getElementById('location-list');
+            listContainer.innerHTML = locations.map((location, index) => {
+                const matchesType = filter === 'all' || location.type === filter;
+                const matchesSearch = searchKeyword === '' || 
+                    location.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+                    location.address.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+                    location.feature.toLowerCase().includes(searchKeyword.toLowerCase());
+                const isHidden = !matchesType || !matchesSearch;
+                const distanceText = location.distance > 0 ? formatDistance(location.distance) : "";
+                const isHotel = location.type === '酒店';
+                
+                return `
+                    <div class="coffee-card location-card ${index === 0 ? 'active' : ''} ${isHidden ? 'hidden' : ''}" data-id="${index}">
+                        <div class="location-card-header" onclick="focusMarker(${index})">
+                            <h3>${location.name}</h3>
+                            ${!isHotel ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteLocation(${index})" title="删除">🗑️</button>` : ''}
+                        </div>
+                        <div onclick="focusMarker(${index})">
+                            <div>
+                                <span class="type-badge">${getTypeIcon(location.type)} ${location.type}</span>
+                                ${distanceText ? `<span class="distance">距酒店 ${distanceText}</span>` : ''}
+                            </div>
+                            <p>${location.feature}</p>
+                            <div class="address">📍 ${location.address}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function deleteLocation(index) {
+            const location = locations[index];
+            
+            if (location.type === '酒店') {
+                alert('酒店不能被删除！');
+                return;
+            }
+            
+            if (!confirm('确定要删除「' + location.name + '」吗？')) {
+                return;
+            }
+            
+            locations.splice(index, 1);
+            locationData.locations = locations;
+            
+            map.removeLayer(markers[index]);
+            markers.splice(index, 1);
+            
+            if (index > 0 && polylines[index - 1]) {
+                map.removeLayer(polylines[index - 1]);
+                polylines.splice(index - 1, 1);
+            }
+            
+            const saved = await saveLocations();
+            if (!saved) {
+                return;
+            }
+            
+            renderLocationList(currentFilter, currentSearchKeyword);
+            
+            if (index > 0) {
+                focusMarker(Math.max(0, index - 1));
+            }
+        }
+
+        function initMap() {
+            locations = locationData.locations;
+            hotel = locations[0];
+            
+            map = L.map('map').setView([29.56, 106.57], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            locations.forEach((location, index) => {
+                if (location.id !== hotel.id) {
+                    location.distance = calculateDistance(hotel.lat, hotel.lng, location.lat, location.lng);
+                }
+
+                const color = getTypeColor(location.type);
+                const icon = getTypeIcon(location.type);
+                
+                const customIcon = L.divIcon({
+                    className: 'location-marker',
+                    html: `<div style="background: ${color}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); border: 3px solid white;">${icon}</div>`,
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17]
+                });
+
+                const marker = L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map);
+                const distanceText = location.distance > 0 ? formatDistance(location.distance) : "-";
+                const popupContent = `
+                    <div class="info-popup">
+                        <h4>${location.name}</h4>
+                        <p><strong>类型：</strong>${location.type}</p>
+                        <p>${location.feature}</p>
+                        ${location.distance > 0 ? `
+                        <div class="distance-info">
+                            <strong>距酒店：</strong>${distanceText}
+                        </div>
+                        ` : ''}
+                        <p style="margin-top: 8px; font-size: 0.85em; color: #666;">
+                            <strong>地址：</strong>${location.address}
+                        </p>
+                        <p style="font-size: 0.85em; color: #666;">
+                            <strong>营业时间：</strong>${location.hours}
+                        </p>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+                markers.push(marker);
+
+                if (hotel && location.id !== hotel.id) {
+                    const polyline = L.polyline([[hotel.lat, hotel.lng], [location.lat, location.lng]], {
+                        color: '#95a5a6',
+                        weight: 2,
+                        opacity: 0.5,
+                        dashArray: '5, 5'
+                    }).addTo(map);
+                    polylines.push(polyline);
+                }
+
+                marker.on('click', () => {
+                    updateActiveCard(index);
+                    highlightPolyline(index);
+                });
+            });
+
+            renderLocationList();
+            initEventListeners();
+        }
+
+        function initEventListeners() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderLocationList(currentFilter, currentSearchKeyword);
+                });
+            });
+
+            document.getElementById('list-search-btn').addEventListener('click', () => {
+                const keyword = document.getElementById('list-search-input').value;
+                currentSearchKeyword = keyword;
+                renderLocationList(currentFilter, currentSearchKeyword);
+            });
+
+            document.getElementById('list-search-input').addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    const keyword = document.getElementById('list-search-input').value;
+                    currentSearchKeyword = keyword;
+                    renderLocationList(currentFilter, currentSearchKeyword);
+                }
+            });
+
+            document.getElementById('map-search-btn').addEventListener('click', () => {
+                const keyword = document.getElementById('map-search-input').value;
+                if (keyword.trim() === '') return;
+                
+                const foundIndex = locations.findIndex(loc => 
+                    loc.name.toLowerCase().includes(keyword.toLowerCase()) ||
+                    loc.address.toLowerCase().includes(keyword.toLowerCase()) ||
+                    loc.feature.toLowerCase().includes(keyword.toLowerCase())
+                );
+                
+                if (foundIndex !== -1) {
+                    focusMarker(foundIndex);
+                    currentSearchKeyword = keyword;
+                    renderLocationList(currentFilter, currentSearchKeyword);
+                    document.getElementById('list-search-input').value = keyword;
+                } else {
+                    alert('未找到该地点，请尝试其他关键词');
+                }
+            });
+
+            document.getElementById('map-search-input').addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('map-search-btn').click();
+                }
+            });
+
+            const addLocationBtn = document.getElementById('add-location-btn');
+            const addLocationForm = document.getElementById('add-location-form');
+            const cancelAddBtn = document.getElementById('cancel-add-btn');
+            const searchLocationBtn = document.getElementById('search-location-btn');
+            const confirmAddBtn = document.getElementById('confirm-add-btn');
+            const geoResult = document.getElementById('geo-result');
+
+            addLocationBtn.addEventListener('click', () => {
+                addLocationForm.classList.add('show');
+                addLocationBtn.style.display = 'none';
+            });
+
+            cancelAddBtn.addEventListener('click', () => {
+                addLocationForm.classList.remove('show');
+                addLocationBtn.style.display = 'block';
+                clearAddForm();
+            });
+
+            function clearAddForm() {
+                document.getElementById('new-location-name').value = '';
+                document.getElementById('new-location-type').value = '咖啡店';
+                document.getElementById('new-location-hours').value = '';
+                document.getElementById('new-location-feature').value = '';
+                geoResult.classList.remove('show');
+                geoResult.innerHTML = '';
+                geoResult.style.background = '#d4edda';
+                geoResult.style.color = '#155724';
+                newLocationData = null;
+                searchLocationBtn.style.display = 'inline-block';
+                searchLocationBtn.disabled = false;
+                searchLocationBtn.textContent = '🔍 搜索地点';
+                confirmAddBtn.style.display = 'none';
+            }
+
+            searchLocationBtn.addEventListener('click', () => {
+                const name = document.getElementById('new-location-name').value.trim();
+                if (!name) {
+                    alert('请填写地点名称！');
+                    return;
+                }
+
+                if (!amapLoaded || !placeSearch) {
+                    alert('高德地图API还在加载中，请稍等几秒后再试，或刷新页面！');
+                    return;
+                }
+
+                searchLocationBtn.disabled = true;
+                searchLocationBtn.textContent = '搜索中...';
+
+                console.log('开始搜索地点：', name);
+
+                placeSearch.search(name, function(status, result) {
+                    searchLocationBtn.disabled = false;
+                    searchLocationBtn.textContent = '🔍 搜索地点';
+
+                    console.log('搜索状态：', status);
+                    console.log('搜索结果：', result);
+
+                    if (status === 'complete' && result.poiList && result.poiList.pois.length > 0) {
+                        const poi = result.poiList.pois[0];
+                        console.log('找到POI：', poi);
+
+                        newLocationData = {
+                            name: poi.name,
+                            address: poi.address,
+                            lat: poi.location.lat,
+                            lng: poi.location.lng
+                        };
+
+                        geoResult.innerHTML = `
+                            <strong>✅ 找到地点！</strong><br>
+                            <strong>名称：</strong>${poi.name}<br>
+                            <strong>地址：</strong>${poi.address}<br>
+                            <strong>经纬度：</strong>${poi.location.lng.toFixed(6)}, ${poi.location.lat.toFixed(6)}
+                        `;
+                        geoResult.classList.add('show');
+                        geoResult.style.background = '#d4edda';
+                        geoResult.style.color = '#155724';
+
+                        searchLocationBtn.style.display = 'none';
+                        confirmAddBtn.style.display = 'inline-block';
+                    } else {
+                        let errorInfo = '请检查名称是否正确';
+                        if (result && result.info) {
+                            errorInfo = result.info;
+                        }
+                        geoResult.innerHTML = '<strong>❌ 未找到该地点</strong><br>错误信息：' + errorInfo;
+                        geoResult.classList.add('show');
+                        geoResult.style.background = '#f8d7da';
+                        geoResult.style.color = '#721c24';
+                        newLocationData = null;
+                    }
+                });
+            });
+
+            confirmAddBtn.addEventListener('click', async () => {
+                const name = document.getElementById('new-location-name').value.trim();
+                const type = document.getElementById('new-location-type').value;
+                const hours = document.getElementById('new-location-hours').value.trim() || '全天开放';
+                const feature = document.getElementById('new-location-feature').value.trim() || '';
+
+                if (!name) {
+                    alert('请填写地点名称！');
+                    return;
+                }
+
+                if (!newLocationData) {
+                    alert('请先搜索地点！');
+                    return;
+                }
+
+                const typePrefixes = {
+                    '酒店': 'hotel',
+                    '咖啡店': 'coffee',
+                    '饭店': 'restaurant',
+                    '景点': 'sight',
+                    '交通枢纽': 'transport'
+                };
+                const prefix = typePrefixes[type] || 'custom';
+                const newId = prefix + '-' + Date.now();
+
+                const newLocation = {
+                    id: newId,
+                    name: newLocationData.name,
+                    type: type,
+                    address: newLocationData.address,
+                    lat: newLocationData.lat,
+                    lng: newLocationData.lng,
+                    hours: hours,
+                    feature: feature,
+                    distance: 0
+                };
+
+                if (hotel) {
+                    newLocation.distance = calculateDistance(hotel.lat, hotel.lng, newLocation.lat, newLocation.lng);
+                }
+
+                locations.push(newLocation);
+                locationData.locations = locations;
+
+                const color = getTypeColor(type);
+                const icon = getTypeIcon(type);
+                
+                const customIcon = L.divIcon({
+                    className: 'location-marker',
+                    html: `<div style="background: ${color}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); border: 3px solid white;">${icon}</div>`,
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17]
+                });
+
+                const marker = L.marker([newLocation.lat, newLocation.lng], { icon: customIcon }).addTo(map);
+                const distanceText = newLocation.distance > 0 ? formatDistance(newLocation.distance) : "-";
+                const popupContent = `
+                    <div class="info-popup">
+                        <h4>${newLocation.name}</h4>
+                        <p><strong>类型：</strong>${newLocation.type}</p>
+                        <p>${newLocation.feature}</p>
+                        ${newLocation.distance > 0 ? `
+                        <div class="distance-info">
+                            <strong>距酒店：</strong>${distanceText}
+                        </div>
+                        ` : ''}
+                        <p style="margin-top: 8px; font-size: 0.85em; color: #666;">
+                            <strong>地址：</strong>${newLocation.address}
+                        </p>
+                        <p style="font-size: 0.85em; color: #666;">
+                            <strong>营业时间：</strong>${newLocation.hours}
+                        </p>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+                markers.push(marker);
+
+                if (hotel) {
+                    const polyline = L.polyline([[hotel.lat, hotel.lng], [newLocation.lat, newLocation.lng]], {
+                        color: '#95a5a6',
+                        weight: 2,
+                        opacity: 0.5,
+                        dashArray: '5, 5'
+                    }).addTo(map);
+                    polylines.push(polyline);
+                }
+
+                const saved = await saveLocations();
+                if (!saved) {
+                    return;
+                }
+
+                renderLocationList(currentFilter, currentSearchKeyword);
+
+                addLocationForm.classList.remove('show');
+                addLocationBtn.style.display = 'block';
+                clearAddForm();
+
+                alert('✅ 新地点添加成功！');
+                
+                const newIndex = locations.length - 1;
+                focusMarker(newIndex);
+            });
+        }
+
+        function initAMap() {
+            console.log('检查高德API加载状态...');
+            console.log('window.AMap:', window.AMap);
+            console.log('window.AMap.PlaceSearch:', window.AMap && window.AMap.PlaceSearch);
+
+            if (window.AMap && window.AMap.PlaceSearch) {
+                placeSearch = new AMap.PlaceSearch({
+                    city: '重庆',
+                    pageSize: 5,
+                    pageIndex: 1
+                });
+                amapLoaded = true;
+                console.log('✅ 高德地图API加载成功！');
+            } else {
+                console.log('⏳ 等待高德地图API加载...');
+                setTimeout(initAMap, 500);
+            }
+        }
+
+        window.onload = function() {
+            initAMap();
+            loadLocations();
+        };
+    </script>
+</body>
+</html>
